@@ -20,13 +20,19 @@ public class AuthService {
 
     public void register(RegisterDto dto) {
         if (repository.findByLogin(dto.getLogin()).isPresent()) {
-            throw new RuntimeException("Login already exists");
+            throw new IllegalArgumentException("Login already exists");
         }
+
+        String role = (dto.getRole() != null && !dto.getRole().isBlank())
+                ? dto.getRole().toUpperCase()
+                : "USER";
+
         AuthCredential creds = new AuthCredential();
         creds.setLogin(dto.getLogin());
         creds.setPassword(passwordEncoder.encode(dto.getPassword()));
         creds.setUserId(dto.getUserId());
-        creds.setRole(dto.getRole().toUpperCase());
+        creds.setRole(role);
+
         repository.save(creds);
     }
 
@@ -47,7 +53,7 @@ public class AuthService {
     public AuthResponseDto refresh(String refreshToken) {
         Claims claims = jwtService.validateTokenAndGetClaims(refreshToken);
         AuthCredential user = repository.findByLogin(claims.getSubject())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return new AuthResponseDto(
                 jwtService.generateAccessToken(user),
