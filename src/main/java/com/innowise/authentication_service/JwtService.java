@@ -41,7 +41,7 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("role", user.getRole());
-        claims.put("type", tokenType); // Важнейшее исправление для безопасности
+        claims.put("type", tokenType);
 
         return Jwts.builder()
                 .setClaims(claims)
