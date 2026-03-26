@@ -85,9 +85,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    /**
-     * Вспомогательный метод для генерации токенов и сохранения Refresh Token в БД (Замечание 6)
-     */
+
     private AuthResponse generateAndSaveTokens(AuthCredential credential) {
         String accessToken = jwtService.generateAccessToken(credential);
         String refreshToken = jwtService.generateRefreshToken(credential);
