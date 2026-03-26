@@ -25,4 +25,7 @@ public class AuthCredential {
     @Column(nullable = false)
     private String role;
 
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
 }

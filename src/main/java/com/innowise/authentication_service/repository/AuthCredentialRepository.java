@@ -11,4 +11,5 @@ public interface AuthCredentialRepository extends JpaRepository<AuthCredential, 
 
     Optional<AuthCredential> findByLogin(String login);
 
+    Optional<AuthCredential> findByRefreshToken(String refreshToken);
 }

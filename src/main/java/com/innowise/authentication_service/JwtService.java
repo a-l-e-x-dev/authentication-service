@@ -11,46 +11,82 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class JwtService {
+
     @Value("${jwt.secret}")
-    private String secret; // Общий секрет для микросервисов (минимум 256 бит)
+    private String secret;
 
-    @Value("${jwt.access.expiration}")
-    private long accessTokenValidity;
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
 
-    @Value("${jwt.refresh.expiration}")
-    private long refreshTokenValidity;
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+
+    public String generateAccessToken(AuthCredential user) {
+        return buildToken(user, accessTokenExpiration, "ACCESS");
     }
 
-    public String generateToken(AuthCredential user, long expirationMillis) {
+
+    public String generateRefreshToken(AuthCredential user) {
+        return buildToken(user, refreshTokenExpiration, "REFRESH");
+    }
+
+
+    private String buildToken(AuthCredential user, long expirationMillis, String tokenType) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getUserId());
+        claims.put("role", user.getRole());
+        claims.put("type", tokenType); // Важнейшее исправление для безопасности
+
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(user.getLogin())
-                .claim("userId", user.getUserId())
-                .claim("role", user.getRole())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateAccessToken(AuthCredential user) {
-        return generateToken(user, accessTokenValidity);
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSignKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    public String generateRefreshToken(AuthCredential user) {
-        return generateToken(user, refreshTokenValidity);
+    public Long extractUserId(String token) {
+        Object userIdObj = extractAllClaims(token).get("userId");
+        return userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
     }
 
-    public Claims validateTokenAndGetClaims(String token) {
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+
+    public String extractTokenType(String token) {
+        return extractAllClaims(token).get("type", String.class);
+    }
+
+    private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(getSignKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    private Key getSignKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
