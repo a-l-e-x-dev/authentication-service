@@ -9,6 +9,7 @@ import com.innowise.authentication_service.entities.AuthCredential;
 import com.innowise.authentication_service.enums.Role;
 import com.innowise.authentication_service.exception.UserAlreadyExistsException;
 import com.innowise.authentication_service.repository.AuthCredentialRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -97,5 +98,10 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    @Transactional
+    public void deleteCredentials(String login) {
+        repository.deleteByLogin(login);
     }
 }

@@ -27,7 +27,7 @@ public interface AuthService {
      * @throws org.springframework.security.authentication.BadCredentialsException if the login or password is incorrect.
      */
     AuthResponse login(AuthRequest request);
-
     AuthResponse refresh(String refreshToken);
     ValidationResponse validateToken(String token);
+    void deleteCredentials(String login);
 }
